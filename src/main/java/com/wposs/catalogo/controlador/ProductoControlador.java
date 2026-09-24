@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/productos")
@@ -21,91 +20,68 @@ public class ProductoControlador {
     }
 
     @GetMapping
-    public ResponseEntity<List<Producto>> buscarTodos(
+    public ResponseEntity<List<Producto>> listar(
             @RequestParam(required = false) String categoria) {
 
         if (categoria != null && !categoria.isBlank()) {
             return ResponseEntity.ok(
-                    servicio.buscarPorCategoria(categoria)
-            );
+                    servicio.buscarPorCategoria(categoria));
         }
 
-        return ResponseEntity.ok(
-                servicio.buscarTodos()
-        );
+        return ResponseEntity.ok(servicio.buscarTodos());
     }
 
     @GetMapping("/estadisticas")
-    public ResponseEntity<ProductoEstadisticas> obtenerEstadisticas() {
+    public ResponseEntity<ProductoEstadisticas> estadisticas() {
         return ResponseEntity.ok(
-                servicio.obtenerEstadisticas()
-        );
+                servicio.obtenerEstadisticas());
+    }
+
+    @GetMapping("/sin-stock")
+    public ResponseEntity<List<Producto>> sinStock(
+            @RequestParam(defaultValue = "5") Integer limite) {
+
+        return ResponseEntity.ok(
+                servicio.buscarSinStock(limite));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Producto> buscarPorId(
+    public ResponseEntity<Producto> obtener(
             @PathVariable Long id) {
 
-        try {
-            return ResponseEntity.ok(
-                    servicio.buscarPorId(id)
-            );
-
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(
+                servicio.buscarPorId(id));
     }
 
     @PostMapping
-    public ResponseEntity<?> crear(
+    public ResponseEntity<Producto> crear(
             @RequestBody Producto producto) {
 
-        try {
-            Producto creado = servicio.guardar(producto);
+        Producto creado = servicio.guardar(producto);
 
-            URI ubicacion = URI.create(
-                    "/api/productos/" + creado.id()
-            );
+        URI location = URI.create(
+                "/api/productos/" + creado.getId());
 
-            return ResponseEntity
-                    .created(ubicacion)
-                    .body(creado);
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        return ResponseEntity
+                .created(location)
+                .body(creado);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizar(
+    public ResponseEntity<Producto> actualizar(
             @PathVariable Long id,
             @RequestBody Producto producto) {
 
-        try {
-            Producto actualizado =
-                    servicio.actualizar(id, producto);
-
-            return ResponseEntity.ok(actualizado);
-
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        }
+        return ResponseEntity.ok(
+                servicio.actualizar(id, producto));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(
             @PathVariable Long id) {
 
-        try {
-            servicio.eliminar(id);
+        servicio.eliminar(id);
 
-            return ResponseEntity.noContent().build();
-
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.noContent().build();
     }
 }

@@ -1,19 +1,20 @@
-# Catálogo de Productos — Backend
+# Catálogo Backend — Backend 02
 
-API REST desarrollada con Spring Boot 3.5.11 y Java 21 como parte del Semillero WPOSS.
+Persistencia con Spring Data JPA, Hibernate y PostgreSQL.
 
 ## Tecnologías
 
 - Java 21
 - Spring Boot 3.5.11
-- Maven
-- Spring Web
-- Spring Boot DevTools
-- JUnit
-- MockMvc
+- Spring Data JPA
+- Hibernate
+- PostgreSQL 16
+- H2 para pruebas
 
-## Ejecutar el proyecto
+## Base de datos
 
-### Windows
+PostgreSQL se ejecuta mediante Docker:
 
-.\mvnw.cmd spring-boot:run
+```powershell
+
+docker run -d --name catalogo-db -p 5432:5432 -e POSTGRES_PASSWORD=catalogo -e POSTGRES_USER=catalogo -e POSTGRES_DB=catalogo postgres:16-alpine
