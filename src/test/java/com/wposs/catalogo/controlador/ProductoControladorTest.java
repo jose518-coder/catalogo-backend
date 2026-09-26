@@ -3,22 +3,27 @@ package com.wposs.catalogo.controlador;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wposs.catalogo.dto.ProductoDetalle;
 import com.wposs.catalogo.dto.ProductoNuevo;
+import com.wposs.catalogo.seguridad.ServicioJwt;
 import com.wposs.catalogo.dto.ProductoResumen;
 import com.wposs.catalogo.excepcion.RecursoDuplicadoException;
 import com.wposs.catalogo.excepcion.RecursoNoEncontradoException;
 import com.wposs.catalogo.servicio.ProductoServicio;
+import com.wposs.catalogo.seguridad.UsuarioDetailsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+
 
 import java.math.BigDecimal;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -29,10 +34,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ProductoControlador.class)
+@AutoConfigureMockMvc(addFilters = false)
 class ProductoControladorTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockBean
+    private ServicioJwt servicioJwt;
+
+    @MockBean
+    private UsuarioDetailsService usuarioDetailsService;
 
     @Autowired
     private ObjectMapper objectMapper;
