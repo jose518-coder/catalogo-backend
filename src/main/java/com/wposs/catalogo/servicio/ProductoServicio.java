@@ -1,227 +1,263 @@
 package com.wposs.catalogo.servicio;
 
+import com.wposs.catalogo.dto.*;
+import com.wposs.catalogo.excepcion.RecursoDuplicadoException;
+import com.wposs.catalogo.excepcion.RecursoNoEncontradoException;
+import com.wposs.catalogo.mapper.ProductoMapper;
+import com.wposs.catalogo.modelo.Categoria;
 import com.wposs.catalogo.modelo.Producto;
-import com.wposs.catalogo.modelo.ProductoEstadisticas;
 import com.wposs.catalogo.repositorio.CategoriaRepositorio;
 import com.wposs.catalogo.repositorio.ProductoRepositorio;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
 
 @Service
 public class ProductoServicio {
 
-    private final ProductoRepositorio repositorio;
+    private final ProductoRepositorio productoRepositorio;
     private final CategoriaRepositorio categoriaRepositorio;
-    private final BigDecimal iva;
+    private final ProductoMapper productoMapper;
 
     public ProductoServicio(
-            ProductoRepositorio repositorio,
+            ProductoRepositorio productoRepositorio,
             CategoriaRepositorio categoriaRepositorio,
-            @Value("${catalogo.iva:0.19}") BigDecimal iva) {
-
-        this.repositorio = repositorio;
+            ProductoMapper productoMapper
+    ) {
+        this.productoRepositorio = productoRepositorio;
         this.categoriaRepositorio = categoriaRepositorio;
-        this.iva = iva;
+        this.productoMapper = productoMapper;
     }
 
     @Transactional(readOnly = true)
-    public List<Producto> buscarTodos() {
-
-        List<Producto> productos = repositorio.findAll();
-
-        // Acceso intencional a la relación LAZY.
-        // Se utiliza para demostrar el comportamiento N+1.
-        productos.forEach(producto ->
-                producto.getCategoria().getNombre());
-
-        return productos;
+    public List<ProductoResumen> buscarTodos() {
+        return productoRepositorio.findAll()
+                .stream()
+                .map(productoMapper::aResumen)
+                .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<Producto> buscarTodosConCategoria() {
-        return repositorio.buscarConCategoria();
-    }
-
-    @Transactional(readOnly = true)
-    public List<Producto> buscarPorCategoria(String categoria) {
-        return repositorio.findByCategoriaNombre(categoria);
-    }
-
-    @Transactional(readOnly = true)
-    public Producto buscarPorId(Long id) {
-        return repositorio.findById(id)
+    public ProductoDetalle buscarPorId(Long id) {
+        Producto producto = productoRepositorio.findById(id)
                 .orElseThrow(() ->
-                        new NoSuchElementException(
-                                "Producto no encontrado: " + id));
-    }
+                        new RecursoNoEncontradoException(
+                                "No existe el producto con id " + id
+                        )
+                );
 
-    @Transactional(readOnly = true)
-    public List<Producto> buscarSinStock(Integer limite) {
-        return repositorio.findByExistenciasLessThan(limite);
-    }
+        producto.getCategoria().getNombre();
 
-    @Transactional
-    public Producto guardar(Producto producto) {
-
-        validarProducto(producto);
-
-        validarCategoria(producto);
-
-        return repositorio.save(producto);
+        return productoMapper.aDetalle(producto);
     }
 
     @Transactional
-    public Producto actualizar(Long id, Producto producto) {
+    public ProductoDetalle guardar(ProductoNuevo dto) {
 
-        buscarPorId(id);
+        if (productoRepositorio
+                .findByTituloIgnoreCase(dto.titulo())
+                .isPresent()) {
 
-        validarProducto(producto);
-        validarCategoria(producto);
+            throw new RecursoDuplicadoException(
+                    "Ya existe un producto con el título: " + dto.titulo()
+            );
+        }
 
-        Producto productoActualizado = new Producto(
-                id,
-                producto.getTitulo(),
-                producto.getPrecio(),
-                producto.getCategoria(),
-                producto.getExistencias()
+        Categoria categoria = categoriaRepositorio
+                .findById(dto.categoriaId())
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException(
+                                "No existe la categoría con id "
+                                        + dto.categoriaId(),
+                                400
+                        )
+                );
+
+        Producto producto = productoMapper.aEntidad(dto, categoria);
+
+        Producto guardado = productoRepositorio.save(producto);
+
+        return productoMapper.aDetalle(guardado);
+    }
+
+    @Transactional
+    public ProductoDetalle actualizar(
+            Long id,
+            ProductoActualizar dto
+    ) {
+        Producto producto = productoRepositorio.findById(id)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException(
+                                "No existe el producto con id " + id
+                        )
+                );
+
+        productoRepositorio.findByTituloIgnoreCase(dto.titulo())
+                .filter(existente -> !existente.getId().equals(id))
+                .ifPresent(existente -> {
+                    throw new RecursoDuplicadoException(
+                            "Ya existe un producto con el título: "
+                                    + dto.titulo()
+                    );
+                });
+
+        Categoria categoria = categoriaRepositorio
+                .findById(dto.categoriaId())
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException(
+                                "No existe la categoría con id "
+                                        + dto.categoriaId(),
+                                400
+                        )
+                );
+
+        productoMapper.actualizarEntidad(
+                producto,
+                dto,
+                categoria
         );
 
-        return repositorio.save(productoActualizado);
+        return productoMapper.aDetalle(producto);
     }
 
     @Transactional
     public void eliminar(Long id) {
+        Producto producto = productoRepositorio.findById(id)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException(
+                                "No existe el producto con id " + id
+                        )
+                );
 
-        if (!repositorio.existsById(id)) {
-            throw new NoSuchElementException(
-                    "Producto no encontrado: " + id);
-        }
-
-        repositorio.deleteById(id);
+        productoRepositorio.delete(producto);
     }
 
     @Transactional(readOnly = true)
-    public ProductoEstadisticas obtenerEstadisticas() {
+    public List<ProductoDetalle> buscarPorCategoria(String nombre) {
+        return productoRepositorio.findByCategoriaNombre(nombre)
+                .stream()
+                .map(productoMapper::aDetalle)
+                .toList();
+    }
 
-        List<Producto> productos = repositorio.buscarConCategoria();
+    @Transactional(readOnly = true)
+    public List<ProductoDetalle> buscarPorPrecio(
+            BigDecimal minimo,
+            BigDecimal maximo
+    ) {
+        return productoRepositorio
+                .findByPrecioBetween(minimo, maximo)
+                .stream()
+                .map(productoMapper::aDetalle)
+                .toList();
+    }
 
-        int totalProductos = productos.size();
+    @Transactional(readOnly = true)
+    public List<ProductoDetalle> buscarSinStock(int limite) {
+        return productoRepositorio
+                .findByExistenciasLessThan(limite)
+                .stream()
+                .map(productoMapper::aDetalle)
+                .toList();
+    }
 
-        BigDecimal valorTotalInventario =
-                productos.stream()
-                        .map(producto ->
-                                producto.getPrecio()
-                                        .multiply(
-                                                BigDecimal.valueOf(
-                                                        producto.getExistencias()))
-                                        .multiply(
-                                                BigDecimal.ONE.add(iva)))
-                        .reduce(
-                                BigDecimal.ZERO,
-                                BigDecimal::add);
+    @Transactional(readOnly = true)
+    public EstadisticasCatalogo obtenerEstadisticas() {
+
+        List<Producto> productos =
+                productoRepositorio.buscarConCategoria();
+
+        BigDecimal valorTotal = productos.stream()
+                .map(producto ->
+                        producto.getPrecio()
+                                .multiply(
+                                        BigDecimal.valueOf(
+                                                producto.getExistencias()
+                                        )
+                                )
+                )
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal iva = valorTotal
+                .multiply(new BigDecimal("0.19"));
 
         Map<String, Integer> cantidadPorCategoria =
-                productos.stream()
-                        .collect(Collectors.groupingBy(
-                                producto ->
-                                        producto.getCategoria().getNombre(),
-                                Collectors.summingInt(
-                                        Producto::getExistencias)
-                        ));
+                new LinkedHashMap<>();
 
-        return new ProductoEstadisticas(
-                totalProductos,
-                valorTotalInventario,
+        productoRepositorio.contarPorCategoria()
+                .forEach(fila ->
+                        cantidadPorCategoria.put(
+                                (String) fila[0],
+                                ((Number) fila[1]).intValue()
+                        )
+                );
+
+        return new EstadisticasCatalogo(
+                productos.size(),
+                valorTotal.add(iva),
                 cantidadPorCategoria
         );
     }
 
     @Transactional
     public void transferirExistencias(
-            Long origen,
-            Long destino,
-            int cantidad) {
+            Long origenId,
+            Long destinoId,
+            int cantidad
+    ) {
+        Producto origen = productoRepositorio.findById(origenId)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException(
+                                "No existe el producto origen con id "
+                                        + origenId
+                        )
+                );
+
+        Producto destino = productoRepositorio.findById(destinoId)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException(
+                                "No existe el producto destino con id "
+                                        + destinoId
+                        )
+                );
 
         if (cantidad <= 0) {
             throw new IllegalArgumentException(
-                    "La cantidad debe ser mayor que 0");
+                    "La cantidad debe ser mayor que cero"
+            );
         }
 
-        Producto productoOrigen = buscarPorId(origen);
-        Producto productoDestino = buscarPorId(destino);
-
-        int nuevasExistenciasOrigen =
-                productoOrigen.getExistencias() - cantidad;
-
-        if (nuevasExistenciasOrigen < 0) {
+        if (origen.getExistencias() < cantidad) {
             throw new IllegalArgumentException(
-                    "El producto origen no tiene existencias suficientes");
+                    "No hay existencias suficientes"
+            );
         }
 
-        productoOrigen.setExistencias(nuevasExistenciasOrigen);
+        origen.setExistencias(
+                origen.getExistencias() - cantidad
+        );
 
-        productoDestino.setExistencias(
-                productoDestino.getExistencias() + cantidad
+        destino.setExistencias(
+                destino.getExistencias() + cantidad
         );
     }
 
     @Transactional
     public void actualizarPrecioSinSave(
             Long id,
-            BigDecimal nuevoPrecio) {
-
-        Producto producto = buscarPorId(id);
+            BigDecimal nuevoPrecio
+    ) {
+        Producto producto = productoRepositorio.findById(id)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException(
+                                "No existe el producto con id " + id
+                        )
+                );
 
         producto.setPrecio(nuevoPrecio);
-
-        // No se llama a save().
-        // Hibernate debe detectar el cambio mediante dirty checking.
-    }
-
-    private void validarProducto(Producto producto) {
-
-        if (producto.getPrecio() == null
-                || producto.getPrecio().signum() <= 0) {
-
-            throw new IllegalArgumentException(
-                    "El precio debe ser mayor que 0");
-        }
-
-        if (producto.getTitulo() == null
-                || producto.getTitulo().isBlank()) {
-
-            throw new IllegalArgumentException(
-                    "El título no puede estar vacío");
-        }
-
-        if (producto.getExistencias() == null
-                || producto.getExistencias() < 0) {
-
-            throw new IllegalArgumentException(
-                    "Las existencias no pueden ser negativas");
-        }
-    }
-
-    private void validarCategoria(Producto producto) {
-
-        if (producto.getCategoria() == null
-                || producto.getCategoria().getId() == null) {
-
-            throw new IllegalArgumentException(
-                    "La categoría es obligatoria");
-        }
-
-        categoriaRepositorio.findById(
-                        producto.getCategoria().getId())
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "La categoría no existe"));
     }
 }

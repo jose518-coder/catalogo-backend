@@ -1,6 +1,5 @@
 package com.wposs.catalogo.modelo;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
@@ -17,7 +16,9 @@ public class Categoria {
     @Column(nullable = false, unique = true, length = 100)
     private String nombre;
 
-    @JsonIgnore
+    @Column(length = 500)
+    private String descripcion;
+
     @OneToMany(mappedBy = "categoria")
     private List<Producto> productos = new ArrayList<>();
 
@@ -28,9 +29,20 @@ public class Categoria {
         this.nombre = nombre;
     }
 
+    public Categoria(String nombre, String descripcion) {
+        this.nombre = nombre;
+        this.descripcion = descripcion;
+    }
+
     public Categoria(Long id, String nombre) {
         this.id = id;
         this.nombre = nombre;
+    }
+
+    public Categoria(Long id, String nombre, String descripcion) {
+        this.id = id;
+        this.nombre = nombre;
+        this.descripcion = descripcion;
     }
 
     public Long getId() {
@@ -41,11 +53,23 @@ public class Categoria {
         return nombre;
     }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
+    public String getDescripcion() {
+        return descripcion;
     }
 
     public List<Producto> getProductos() {
         return productos;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    public void setProductos(List<Producto> productos) {
+        this.productos = productos;
     }
 }

@@ -33,8 +33,8 @@ public class Producto {
             String titulo,
             BigDecimal precio,
             Categoria categoria,
-            Integer existencias) {
-
+            Integer existencias
+    ) {
         this.id = id;
         this.titulo = titulo;
         this.precio = precio;
@@ -46,9 +46,12 @@ public class Producto {
             String titulo,
             BigDecimal precio,
             Categoria categoria,
-            Integer existencias) {
-
-        this(null, titulo, precio, categoria, existencias);
+            Integer existencias
+    ) {
+        this.titulo = titulo;
+        this.precio = precio;
+        this.categoria = categoria;
+        this.existencias = existencias;
     }
 
     public Long getId() {
@@ -59,28 +62,28 @@ public class Producto {
         return titulo;
     }
 
-    public void setTitulo(String titulo) {
-        this.titulo = titulo;
-    }
-
     public BigDecimal getPrecio() {
         return precio;
-    }
-
-    public void setPrecio(BigDecimal precio) {
-        this.precio = precio;
     }
 
     public Categoria getCategoria() {
         return categoria;
     }
 
-    public void setCategoria(Categoria categoria) {
-        this.categoria = categoria;
-    }
-
     public Integer getExistencias() {
         return existencias;
+    }
+
+    public void setTitulo(String titulo) {
+        this.titulo = titulo;
+    }
+
+    public void setPrecio(BigDecimal precio) {
+        this.precio = precio;
+    }
+
+    public void setCategoria(Categoria categoria) {
+        this.categoria = categoria;
     }
 
     public void setExistencias(Integer existencias) {

@@ -1,65 +1,113 @@
 package com.wposs.catalogo.servicio;
 
+import com.wposs.catalogo.dto.CategoriaDetalle;
+import com.wposs.catalogo.dto.CategoriaNueva;
+import com.wposs.catalogo.excepcion.RecursoDuplicadoException;
+import com.wposs.catalogo.excepcion.RecursoNoEncontradoException;
+import com.wposs.catalogo.excepcion.ReglaDeNegocioException;
+import com.wposs.catalogo.mapper.CategoriaMapper;
 import com.wposs.catalogo.modelo.Categoria;
 import com.wposs.catalogo.repositorio.CategoriaRepositorio;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @Service
 public class CategoriaServicio {
 
-    private final CategoriaRepositorio repositorio;
+    private final CategoriaRepositorio categoriaRepositorio;
+    private final CategoriaMapper categoriaMapper;
 
-    public CategoriaServicio(CategoriaRepositorio repositorio) {
-        this.repositorio = repositorio;
+    public CategoriaServicio(
+            CategoriaRepositorio categoriaRepositorio,
+            CategoriaMapper categoriaMapper
+    ) {
+        this.categoriaRepositorio = categoriaRepositorio;
+        this.categoriaMapper = categoriaMapper;
     }
 
     @Transactional(readOnly = true)
-    public List<Categoria> buscarTodas() {
-        return repositorio.findAll();
+    public List<CategoriaDetalle> buscarTodas() {
+        return categoriaRepositorio.findAll()
+                .stream()
+                .map(categoriaMapper::aDetalle)
+                .toList();
     }
 
     @Transactional(readOnly = true)
-    public Categoria buscarPorId(Long id) {
-        return repositorio.findById(id)
+    public CategoriaDetalle buscarPorId(Long id) {
+        Categoria categoria = categoriaRepositorio.findById(id)
                 .orElseThrow(() ->
-                        new NoSuchElementException(
-                                "Categoría no encontrada: " + id));
+                        new RecursoNoEncontradoException(
+                                "No existe la categoría con id " + id
+                        )
+                );
+
+        return categoriaMapper.aDetalle(categoria);
     }
 
     @Transactional
-    public Categoria guardar(Categoria categoria) {
+    public CategoriaDetalle guardar(CategoriaNueva dto) {
 
-        if (categoria.getNombre() == null
-                || categoria.getNombre().isBlank()) {
-
-            throw new IllegalArgumentException(
-                    "El nombre de la categoría no puede estar vacío");
+        if (categoriaRepositorio.existsByNombreIgnoreCase(
+                dto.nombre()
+        )) {
+            throw new RecursoDuplicadoException(
+                    "Ya existe una categoría con el nombre: "
+                            + dto.nombre()
+            );
         }
 
-        if (repositorio.existsByNombreIgnoreCase(
-                categoria.getNombre())) {
+        Categoria categoria = categoriaMapper.aEntidad(dto);
 
-            throw new IllegalArgumentException(
-                    "La categoría ya existe");
-        }
+        Categoria guardada = categoriaRepositorio.save(categoria);
 
-        return repositorio.save(categoria);
+        return categoriaMapper.aDetalle(guardada);
+    }
+
+    @Transactional
+    public CategoriaDetalle actualizar(
+            Long id,
+            CategoriaNueva dto
+    ) {
+        Categoria categoria = categoriaRepositorio.findById(id)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException(
+                                "No existe la categoría con id " + id
+                        )
+                );
+
+        categoriaRepositorio.findByNombreIgnoreCase(dto.nombre())
+                .filter(existente -> !existente.getId().equals(id))
+                .ifPresent(existente -> {
+                    throw new RecursoDuplicadoException(
+                            "Ya existe una categoría con el nombre: "
+                                    + dto.nombre()
+                    );
+                });
+
+        categoriaMapper.actualizarEntidad(categoria, dto);
+
+        return categoriaMapper.aDetalle(categoria);
     }
 
     @Transactional
     public void eliminar(Long id) {
 
-        Categoria categoria = buscarPorId(id);
+        Categoria categoria = categoriaRepositorio.findById(id)
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException(
+                                "No existe la categoría con id " + id
+                        )
+                );
 
         if (!categoria.getProductos().isEmpty()) {
-            throw new IllegalStateException(
-                    "No se puede eliminar una categoría que tiene productos");
+            throw new ReglaDeNegocioException(
+                    "No se puede eliminar una categoría que tiene productos"
+            );
         }
 
-        repositorio.delete(categoria);
+        categoriaRepositorio.delete(categoria);
     }
 }
