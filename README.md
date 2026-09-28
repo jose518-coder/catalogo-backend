@@ -125,7 +125,7 @@ El resultado de las pruebas se puede consultar en la salida de Maven y en los in
 La aplicación se desplegará en una plataforma compatible con Spring Boot y PostgreSQL administrado.
 
 * **Plataforma:** render.com
-* **URL pública de la API:** 
+* **URL pública de la API:** https://catalogo-backend-6w8e.onrender.com/
 * **Base de datos:** PostgreSQL administrado
 
 En el entorno de producción se deben configurar las variables de entorno necesarias para la conexión a la base de datos, la autenticación JWT, CORS y el puerto de ejecución.
