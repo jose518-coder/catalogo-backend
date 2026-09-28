@@ -16,6 +16,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -23,10 +24,8 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class ManejoErrores {
-
     private static final Logger log =
             LoggerFactory.getLogger(ManejoErrores.class);
-
     @ExceptionHandler(RecursoNoEncontradoException.class)
     public ResponseEntity<ErrorRespuesta> manejarNoEncontrado(
             RecursoNoEncontradoException ex,
@@ -158,6 +157,20 @@ public class ManejoErrores {
                 null
         );
     }
+
+        @ExceptionHandler(NoResourceFoundException.class)
+        public ResponseEntity<ErrorRespuesta> manejarRecursoNoEncontrado(
+                NoResourceFoundException ex,
+                HttpServletRequest request
+        ) {
+        return respuesta(
+                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.NOT_FOUND.getReasonPhrase(),
+                "El recurso solicitado no existe",
+                request.getRequestURI(),
+                null
+        );
+        }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorRespuesta> manejarErrorGeneral(
