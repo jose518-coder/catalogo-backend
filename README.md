@@ -1,81 +1,160 @@
-# Catálogo Backend — Backend 04
+# Catálogo Backend — Backend 05
 
-En este módulo se implementó la autenticación y autorización mediante Spring Security y JWT.
+API REST para la gestión de un catálogo de productos, desarrollada con Spring Boot 3.5 y Java 21. El proyecto incluye autenticación mediante JWT, persistencia con PostgreSQL, migraciones con Flyway, documentación con Swagger y configuración para distintos entornos.
 
-## Tecnologías
+## Tecnologías utilizadas
 
 * Java 21
-* Spring Boot 3.5.11
+* Spring Boot 3.5
+* Spring Data JPA
 * Spring Security
 * JWT
-* BCrypt
-* Spring Data JPA
 * PostgreSQL
-* H2 para pruebas
+* Flyway
+* Swagger / OpenAPI
+* Docker y Docker Compose
 * Maven
-* JUnit 5
-* MockMvc
 
-## Objetivos del módulo
+## Requisitos previos
 
-* Autenticación mediante JWT.
-* Registro e inicio de sesión.
-* Consulta del perfil autenticado.
-* Contraseñas protegidas con BCrypt.
-* Autorización basada en roles.
-* Configuración de seguridad sin estado (stateless).
-* Protección de endpoints.
-* Manejo de errores HTTP 401 y 403.
-* Configuración de CORS.
-* Pruebas automatizadas.
+Para ejecutar el proyecto localmente se necesita:
 
-## Endpoints de autenticación
+* Java 21
+* Maven
+* PostgreSQL, si se ejecuta sin Docker
+* Docker y Docker Compose, si se utiliza el entorno de contenedores
 
-| Método | Endpoint             | Descripción       | Acceso      |
-| ------ | -------------------- | ----------------- | ----------- |
-| POST   | `/api/auth/registro` | Registrar usuario | Público     |
-| POST   | `/api/auth/login`    | Iniciar sesión    | Público     |
-| GET    | `/api/auth/yo`       | Consultar perfil  | Autenticado |
+## Perfiles de configuración
 
-## Roles y permisos
+La aplicación cuenta con los siguientes perfiles:
 
-| Rol    | Permisos                                     |
-| ------ | -------------------------------------------- |
-| USER   | Consultar productos y categorías públicas    |
-| EDITOR | Consultar, crear y modificar productos       |
-| ADMIN  | Administrar productos, categorías y usuarios |
+* `dev`: configuración para desarrollo local. Habilita la documentación Swagger y el registro de consultas SQL.
+* `test`: configuración para ejecutar las pruebas automatizadas.
+* `prod`: configuración para producción. Utiliza variables de entorno y deshabilita Swagger.
 
-El registro público asigna automáticamente el rol `USER`. No se permite asignar privilegios mediante el cuerpo de la solicitud de registro.
+La configuración general se encuentra en `src/main/resources/application.properties`. Las configuraciones específicas están en los archivos `application-dev.properties`, `application-test.properties` y `application-prod.properties`.
 
-## Seguridad JWT
+## Variables de entorno
 
-La API utiliza tokens JWT para identificar a los usuarios autenticados.
+La aplicación utiliza las siguientes variables de entorno:
 
-El secreto JWT se configura mediante la variable de entorno `JWT_SECRETO`. No debe incluirse el secreto real en el repositorio.
+| Variable        | Descripción                                         |
+| --------------- | --------------------------------------------------- |
+| `DATABASE_URL`  | URL de conexión a PostgreSQL.                       |
+| `DB_USERNAME`   | Usuario de la base de datos.                        |
+| `DB_PASSWORD`   | Contraseña de la base de datos.                     |
+| `JWT_SECRETO`   | Clave secreta utilizada para firmar los tokens JWT. |
+| `CORS_ORIGENES` | Orígenes permitidos para las solicitudes CORS.      |
+| `PORT`          | Puerto en el que se ejecuta la aplicación.          |
 
-La duración del token es de una hora.
+El archivo `.env.ejemplo` contiene una plantilla de las variables necesarias para el entorno local.
 
-Las sesiones se configuran como `STATELESS`, por lo que el servidor no mantiene sesiones HTTP tradicionales.
+Se debe crear un archivo `.env` con los valores correspondientes. Este archivo no debe subirse al repositorio, ya que puede contener información sensible.
 
-## Respuestas de seguridad
+## Migraciones de base de datos
 
-* `401 Unauthorized`: la solicitud requiere autenticación o las credenciales no son válidas.
-* `403 Forbidden`: el usuario está autenticado, pero no tiene permisos suficientes.
-* `409 Conflict`: el usuario que se intenta registrar ya existe.
+El esquema de la base de datos se administra mediante Flyway. Las migraciones se encuentran en `src/main/resources/db/migration`.
 
-## Ejecutar la aplicación
+* `V1__esquema_inicial.sql`: crea las tablas iniciales de categorías y productos.
+* `V2__usuarios_y_roles.sql`: crea las tablas y restricciones relacionadas con usuarios y roles.
+* `V3__datos_semilla.sql`: inserta los datos iniciales.
 
-Configurar la variable de entorno `JWT_SECRETO` y ejecutar:
+Las migraciones se ejecutan automáticamente al iniciar la aplicación, cuando Flyway está habilitado.
 
-```powershell
-.\mvnw.cmd spring-boot:run
+Hibernate utiliza `ddl-auto=validate` para comprobar que el esquema existente coincida con las entidades, sin modificarlo.
+
+**Importante:** las migraciones que ya se hayan aplicado no deben modificarse. Para realizar cambios en el esquema se debe crear una nueva migración.
+
+## Ejecución local
+
+1. Clonar el repositorio:
+
+   ```bash
+   git clone https://github.com/jose518-coder/catalogo-backend.git
+   ```
+
+2. Ingresar al directorio del proyecto:
+
+   ```bash
+   cd catalogo-backend
+   ```
+
+3. Configurar las variables de entorno necesarias y verificar la conexión con PostgreSQL.
+
+4. Ejecutar la aplicación con el perfil de desarrollo:
+
+   ```bash
+   mvn spring-boot:run -Dspring-boot.run.profiles=dev
+   ```
+
+La API estará disponible en `http://localhost:8080`, siempre que el puerto configurado sea el 8080.
+
+## Ejecución con Docker Compose
+
+Docker Compose permite iniciar la API y PostgreSQL mediante los servicios definidos en `compose.yaml`.
+
+1. Configurar las variables de entorno en el archivo `.env`.
+
+2. Desde el directorio donde se encuentra `compose.yaml`, ejecutar:
+
+   ```bash
+   docker compose up --build
+   ```
+
+3. Para detener los servicios:
+
+   ```bash
+   docker compose down
+   ```
+
+Los datos de PostgreSQL se conservan mediante el volumen definido en Docker Compose.
+
+
+## Pruebas automatizadas
+
+Para ejecutar las pruebas del proyecto, utilizar:
+
+```bash
+mvn clean test
 ```
 
-## Ejecutar las pruebas
+El resultado de las pruebas se puede consultar en la salida de Maven y en los informes generados dentro de `target/surefire-reports`.
 
-Para ejecutar todas las pruebas:
+## Despliegue
 
-```powershell
-.\mvnw.cmd clean test
-```
+La aplicación se desplegará en una plataforma compatible con Spring Boot y PostgreSQL administrado.
 
+* **Plataforma:** render.com
+* **URL pública de la API:** 
+* **Base de datos:** PostgreSQL administrado
+
+En el entorno de producción se deben configurar las variables de entorno necesarias para la conexión a la base de datos, la autenticación JWT, CORS y el puerto de ejecución.
+
+## Verificaciones del despliegue
+
+Una vez desplegada la aplicación, se deben comprobar las siguientes operaciones:
+
+* Registro de usuarios.
+* Inicio de sesión y generación del token JWT.
+* Consulta y creación de productos.
+* Acceso a las rutas protegidas con autenticación.
+* Restricciones de acceso según el rol del usuario.
+* Persistencia de los datos después de reiniciar la aplicación.
+
+También se debe verificar que un usuario con rol `USER` no pueda eliminar productos y reciba una respuesta HTTP 403.
+
+## Solución de problemas
+
+### Error de validación del esquema
+
+Si Hibernate informa que el esquema de la base de datos no coincide con las entidades, se debe revisar que las migraciones de Flyway se hayan ejecutado correctamente y que la estructura de las tablas corresponda con las entidades del proyecto.
+
+No se debe solucionar este error cambiando `ddl-auto` a `create` o `update` en producción.
+
+### Swagger devuelve 404 en producción
+
+Swagger está deshabilitado en el perfil `prod`. Por este motivo, sus rutas no están disponibles en el entorno de producción. La documentación se consulta en el perfil de desarrollo.
+
+## Repositorio
+
+[Catálogo Backend — GitHub](https://github.com/jose518-coder/catalogo-backend)

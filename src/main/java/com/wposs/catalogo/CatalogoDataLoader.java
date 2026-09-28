@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Profile;
 import java.math.BigDecimal;
 
 @Configuration
-@Profile("!test")
+@Profile("dev")
 public class CatalogoDataLoader {
 
     @Bean

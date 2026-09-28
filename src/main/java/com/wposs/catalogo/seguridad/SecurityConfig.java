@@ -4,9 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wposs.catalogo.dto.ErrorRespuesta;
 import java.time.Instant;
 
+
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -51,6 +54,25 @@ public class SecurityConfig {
 }
 
     @Bean
+    @Order(1)
+    @Profile("dev")
+    public SecurityFilterChain swaggerSecurityFilterChain(
+            HttpSecurity http) throws Exception {
+        http
+            .securityMatcher(
+                "/swagger-ui/**",
+                "/swagger-ui.html",
+                "/v3/api-docs/**"
+            )
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                .anyRequest().permitAll()
+            );
+        return http.build();
+    }
+
+    @Bean
+    @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity http)
             throws Exception {
         http
@@ -114,6 +136,11 @@ public class SecurityConfig {
                     .hasRole("ADMIN")
                     .requestMatchers("/api/usuarios/**")
                     .hasRole("ADMIN")
+                    .requestMatchers(
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/v3/api-docs/**"
+                    ).permitAll()
                     .anyRequest().authenticated()
             )
             .addFilterBefore(

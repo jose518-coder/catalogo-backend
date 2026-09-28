@@ -10,8 +10,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Autenticación", description = "Registro, inicio de sesión y perfil de usuario")
 public class AuthControlador {
 
     private final AuthService authService;
@@ -21,6 +27,24 @@ public class AuthControlador {
     }
 
     @PostMapping("/registro")
+     @Operation(
+        summary = "Registrar usuario",
+        description = "Registra un nuevo usuario en el sistema."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "201",
+            description = "Usuario registrado correctamente"
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Datos de entrada inválidos"
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "El usuario ya existe"
+        )
+    })
     public ResponseEntity<AuthRespuesta> registrar(
             @Valid @RequestBody RegistroSolicitud solicitud) {
 
@@ -32,6 +56,24 @@ public class AuthControlador {
     }
 
     @PostMapping("/login")
+    @Operation(
+        summary = "Iniciar sesión",
+        description = "Autentica al usuario y devuelve sus datos de autenticación."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "Inicio de sesión exitoso"
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Datos de entrada inválidos"
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Credenciales incorrectas"
+        )
+    })
     public ResponseEntity<AuthRespuesta> iniciarSesion(
             @Valid @RequestBody LoginSolicitud solicitud) {
 
@@ -42,6 +84,20 @@ public class AuthControlador {
     }
 
     @GetMapping("/yo")
+    @Operation(
+        summary = "Obtener mi perfil",
+        description = "Obtiene el perfil del usuario autenticado."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "Perfil obtenido correctamente"
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "No hay un usuario autenticado o el token no es válido"
+        )
+    })
     public ResponseEntity<PerfilRespuesta> obtenerMiPerfil(
             org.springframework.security.core.Authentication autenticacion) {
 
