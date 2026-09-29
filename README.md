@@ -84,7 +84,7 @@ Hibernate utiliza `ddl-auto=validate` para comprobar que el esquema existente co
 4. Ejecutar la aplicación con el perfil de desarrollo:
 
    ```bash
-   mvn spring-boot:run -Dspring-boot.run.profiles=dev
+   .\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=dev
    ```
 
 La API estará disponible en `http://localhost:8080`, siempre que el puerto configurado sea el 8080.
@@ -120,15 +120,39 @@ mvn clean test
 
 El resultado de las pruebas se puede consultar en la salida de Maven y en los informes generados dentro de `target/surefire-reports`.
 
+## Endpoints principales
+
+La API dispone de endpoints para la gestión de productos y la autenticación de usuarios.
+
+| Método | Endpoint | Descripción | Acceso |
+|---|---|---|---|
+| GET | `/api/productos` | Consultar los productos. | Público |
+| POST | `/api/auth/registro` | Registrar un nuevo usuario. | Público |
+| POST | `/api/auth/login` | Iniciar sesión y obtener un token JWT. | Público |
+| GET | `/api/auth/yo` | Consultar la información del usuario autenticado. | Autenticado |
+| DELETE | `/api/productos/{id}` | Eliminar un producto. | Administrador |
+
+Las rutas protegidas requieren un token JWT válido. Los permisos de acceso dependen del rol del usuario.
+
+```markdown
 ## Despliegue
 
-La aplicación se desplegará en una plataforma compatible con Spring Boot y PostgreSQL administrado.
+La aplicación está desplegada en Render y utiliza una base de datos PostgreSQL administrada.
 
-* **Plataforma:** render.com
-* **URL pública de la API:** https://catalogo-backend-6w8e.onrender.com/
-* **Base de datos:** PostgreSQL administrado
+- **Plataforma:** Render
+- **URL pública:** https://catalogo-backend-6w8e.onrender.com
+- **Base de datos:** PostgreSQL administrado en Render.
 
-En el entorno de producción se deben configurar las variables de entorno necesarias para la conexión a la base de datos, la autenticación JWT, CORS y el puerto de ejecución.
+En el entorno de producción se configuran las siguientes variables de entorno:
+
+- `DATABASE_URL`: URL de conexión a PostgreSQL.
+- `DB_USERNAME`: usuario de la base de datos.
+- `DB_PASSWORD`: contraseña de la base de datos.
+- `JWT_SECRETO`: clave para firmar los tokens JWT.
+- `CORS_ORIGENES`: orígenes permitidos para las solicitudes CORS.
+- `PORT`: puerto de ejecución de la aplicación.
+
+Las variables sensibles se configuran directamente en el entorno de Render y no deben almacenarse en el repositorio.
 
 ## Verificaciones del despliegue
 
@@ -154,6 +178,7 @@ No se debe solucionar este error cambiando `ddl-auto` a `create` o `update` en p
 ### Swagger devuelve 404 en producción
 
 Swagger está deshabilitado en el perfil `prod`. Por este motivo, sus rutas no están disponibles en el entorno de producción. La documentación se consulta en el perfil de desarrollo.
+
 
 ## Repositorio
 
