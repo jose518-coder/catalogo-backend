@@ -183,3 +183,6 @@ Swagger está deshabilitado en el perfil `prod`. Por este motivo, sus rutas no e
 ## Repositorio
 
 [Catálogo Backend — GitHub](https://github.com/jose518-coder/catalogo-backend)
+
+<img width="1917" height="952" alt="image" src="https://github.com/user-attachments/assets/f1ffde6d-9693-44e8-87b5-a86b5e97da27" />
+
