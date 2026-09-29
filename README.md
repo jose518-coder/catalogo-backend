@@ -134,7 +134,7 @@ La API dispone de endpoints para la gestión de productos y la autenticación de
 
 Las rutas protegidas requieren un token JWT válido. Los permisos de acceso dependen del rol del usuario.
 
-```markdown
+
 ## Despliegue
 
 La aplicación está desplegada en Render y utiliza una base de datos PostgreSQL administrada.
@@ -184,5 +184,7 @@ Swagger está deshabilitado en el perfil `prod`. Por este motivo, sus rutas no e
 
 [Catálogo Backend — GitHub](https://github.com/jose518-coder/catalogo-backend)
 
-<img width="1917" height="952" alt="image" src="https://github.com/user-attachments/assets/f1ffde6d-9693-44e8-87b5-a86b5e97da27" />
+
+<img width="1917" height="967" alt="app funcionando" src="https://github.com/user-attachments/assets/84fd11da-e342-44b7-adff-9a7e50b6e3d2" />
+
 
