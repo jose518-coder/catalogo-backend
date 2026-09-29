@@ -2,18 +2,19 @@ package com.wposs.catalogo.servicio;
 
 import com.wposs.catalogo.modelo.Categoria;
 import com.wposs.catalogo.modelo.Producto;
+import com.wposs.catalogo.dto.ProductoResumen;
 
 import com.wposs.catalogo.repositorio.CategoriaRepositorio;
 import com.wposs.catalogo.repositorio.ProductoRepositorio;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -105,5 +106,29 @@ class ProductoServicioTest {
 
         assertThat(actualizado.getPrecio())
                 .isEqualByComparingTo("150.00");
+    }
+
+    @Test
+    void listarDevuelveImagenesTrasCerrarLaTransaccion() {
+        Categoria categoria = categoriaRepositorio.save(
+                new Categoria("fotografia"));
+        Producto guardado = productoRepositorio.saveAndFlush(
+                new Producto(
+                        "Camara compacta",
+                        new BigDecimal("125.00"),
+                        categoria,
+                        3,
+                        "Cámara compacta para uso diario.",
+                        List.of("https://ejemplo.com/camara.jpg")
+                )
+        );
+
+        ProductoResumen resumen = servicio.buscarTodos().stream()
+                .filter(producto -> producto.id().equals(guardado.getId()))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(resumen.imagenes())
+                .containsExactly("https://ejemplo.com/camara.jpg");
     }
 }

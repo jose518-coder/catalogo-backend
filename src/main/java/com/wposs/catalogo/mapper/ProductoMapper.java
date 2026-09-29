@@ -8,6 +8,8 @@ import com.wposs.catalogo.modelo.Categoria;
 import com.wposs.catalogo.modelo.Producto;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class ProductoMapper {
 
@@ -20,7 +22,7 @@ public class ProductoMapper {
                 producto.getCategoria().getId(),
                 producto.getCategoria().getNombre(),
                 producto.getDescripcion(),
-                producto.getImagenes()
+                List.copyOf(producto.getImagenes())
         );
     }
 
@@ -33,7 +35,7 @@ public class ProductoMapper {
                 producto.getCategoria().getId(),
                 producto.getCategoria().getNombre(),
                 producto.getDescripcion(),
-                producto.getImagenes()
+                List.copyOf(producto.getImagenes())
         );
     }
 
