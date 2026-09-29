@@ -17,7 +17,10 @@ public class ProductoMapper {
                 producto.getTitulo(),
                 producto.getPrecio(),
                 producto.getExistencias(),
-                producto.getCategoria().getNombre()
+                producto.getCategoria().getId(),
+                producto.getCategoria().getNombre(),
+                producto.getDescripcion(),
+                producto.getImagenes()
         );
     }
 
@@ -25,7 +28,12 @@ public class ProductoMapper {
         return new ProductoResumen(
                 producto.getId(),
                 producto.getTitulo(),
-                producto.getPrecio()
+                producto.getPrecio(),
+                producto.getExistencias(),
+                producto.getCategoria().getId(),
+                producto.getCategoria().getNombre(),
+                producto.getDescripcion(),
+                producto.getImagenes()
         );
     }
 
@@ -34,7 +42,9 @@ public class ProductoMapper {
                 dto.titulo(),
                 dto.precio(),
                 categoria,
-                dto.existencias()
+                dto.existencias(),
+                dto.descripcion(),
+                dto.imagenes()
         );
     }
 
@@ -47,5 +57,7 @@ public class ProductoMapper {
         producto.setPrecio(dto.precio());
         producto.setExistencias(dto.existencias());
         producto.setCategoria(categoria);
+        producto.setDescripcion(dto.descripcion());
+        producto.setImagenes(dto.imagenes());
     }
 }

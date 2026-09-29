@@ -13,7 +13,16 @@ public record ProductoResumen(
         String titulo,
 
         @Schema(description = "Precio del producto", example = "85000.00")
-        BigDecimal precio
+        BigDecimal precio,
+        Integer existencias,
+        Long categoriaId,
+        String categoria,
+        String descripcion,
+        java.util.List<String> imagenes
 
 ) {
+    public ProductoResumen(Long id, String titulo, BigDecimal precio) {
+        this(id, titulo, precio, 0, null, null,
+                "Descripción pendiente para " + titulo + ".", java.util.List.of());
+    }
 }

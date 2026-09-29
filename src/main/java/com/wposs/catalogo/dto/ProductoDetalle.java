@@ -18,8 +18,19 @@ public record ProductoDetalle(
         @Schema(description = "Cantidad de unidades disponibles", example = "25")
         Integer existencias,
 
+        Long categoriaId,
+
         @Schema(description = "Nombre de la categoría del producto", example = "Accesorios")
-        String categoria
+        String categoria,
+
+        String descripcion,
+
+        java.util.List<String> imagenes
 
 ) {
+    public ProductoDetalle(Long id, String titulo, BigDecimal precio,
+                           Integer existencias, String categoria) {
+        this(id, titulo, precio, existencias, null, categoria,
+                "Descripción pendiente para " + titulo + ".", java.util.List.of());
+    }
 }
